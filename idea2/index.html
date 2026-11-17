@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>わたしの映画おすすめ</title>
+<style>
+  :root {
+    --bg: #f5f3f8;
+    --card: #ffffff;
+    --text: #272335;
+    --muted: #716a84;
+    --line: #e3dfeb;
+    --accent: #6c4bd6;
+    --accent-soft: #ece7fb;
+    --good: #1f7a55;
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #17151d;
+      --card: #24212d;
+      --text: #efecf6;
+      --muted: #a39db5;
+      --line: #3a3548;
+      --accent: #9f8cf0;
+      --accent-soft: #2f2a40;
+      --good: #7fd6ab;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #17151d;
+    --card: #24212d;
+    --text: #efecf6;
+    --muted: #a39db5;
+    --line: #3a3548;
+    --accent: #9f8cf0;
+    --accent-soft: #2f2a40;
+    --good: #7fd6ab;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", "Meiryo", sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 16px; }
+  header h1 { font-size: 1.3rem; margin: 6px 0 4px; }
+  .lead { margin: 0; color: var(--muted); font-size: .9rem; }
+  .notice {
+    margin: 12px 0 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--accent-soft);
+    font-size: .82rem;
+  }
+  h2 { font-size: 1rem; margin: 0 0 12px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-top: 14px;
+  }
+  .label { display: block; font-size: .9rem; color: var(--muted); margin: 14px 0 6px; }
+  .label:first-of-type { margin-top: 0; }
+
+  /* ジャンル（チェック） */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 6px 14px;
+    border: 2px solid var(--line);
+    border-radius: 999px;
+    font-size: .9rem;
+    cursor: pointer;
+    user-select: none;
+  }
+  .chip input { position: absolute; opacity: 0; pointer-events: none; }
+  .chip:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); font-weight: 700; }
+  .chip:has(input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  /* 気分（ラジオ） */
+  .moods { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  @media (min-width: 480px) { .moods { grid-template-columns: repeat(4, 1fr); } }
+  .mood {
+    position: relative;
+    display: block;
+    text-align: center;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 6px;
+    min-height: 58px;
+    cursor: pointer;
+    font-size: .92rem;
+  }
+  .mood input { position: absolute; opacity: 0; pointer-events: none; }
+  .mood:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); font-weight: 700; }
+  .mood:has(input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .mood small { display: block; color: var(--muted); font-size: .72rem; font-weight: 400; }
+
+  /* スライダー */
+  .sliderhead { display: flex; justify-content: space-between; align-items: baseline; margin-top: 14px; }
+  .sliderhead .label { margin: 0; }
+  output { font-weight: 700; color: var(--accent); }
+  input[type="range"] { width: 100%; height: 28px; margin: 6px 0 0; accent-color: var(--accent); }
+
+  /* 入力 */
+  input[type="text"], input[type="number"] {
+    width: 100%;
+    min-height: 48px;
+    font-size: 16px; /* iOSのズーム防止 */
+    padding: 8px 12px;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: inherit;
+  }
+  input:focus { outline: none; border-color: var(--accent); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 380px) { .grid2 { grid-template-columns: 1fr; } }
+
+  button {
+    min-height: 48px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: .95rem;
+    font-weight: 700;
+    font-family: inherit;
+    color: #fff;
+    background: var(--accent);
+    cursor: pointer;
+  }
+  button:active { transform: scale(.98); }
+  button.ghost {
+    background: transparent;
+    color: var(--accent);
+    border: 2px solid var(--accent);
+  }
+  button.small { min-height: 40px; padding: 6px 12px; font-size: .85rem; }
+  .btnrow { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .btnrow button { flex: 1 1 140px; }
+
+  /* 結果 */
+  .movie { border-top: 1px solid var(--line); padding: 14px 0; }
+  .movie:first-of-type { border-top: none; padding-top: 0; }
+  .movie-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+  .title { font-weight: 700; font-size: 1.05rem; overflow-wrap: anywhere; }
+  .rank {
+    flex: 0 0 auto;
+    font-size: .78rem;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 999px;
+    padding: 2px 10px;
+  }
+  .meta { font-size: .82rem; color: var(--muted); margin: 4px 0 6px; }
+  .tag {
+    display: inline-block;
+    font-size: .74rem;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 0 6px;
+    margin: 0 4px 4px 0;
+  }
+  .reasons { font-size: .85rem; margin: 6px 0 0; padding-left: 18px; color: var(--good); }
+  .movie .btnrow { margin-top: 8px; }
+  .empty { color: var(--muted); font-size: .92rem; margin: 0; }
+  .sub-title { font-size: .9rem; margin: 18px 0 8px; color: var(--muted); }
+  .list { list-style: none; margin: 0; padding: 0; font-size: .9rem; }
+  .list li { display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); }
+  .list li:first-child { border-top: none; }
+  .list button { min-height: 36px; padding: 4px 10px; font-size: .8rem; }
+
+  details summary { cursor: pointer; font-weight: 700; min-height: 40px; display: flex; align-items: center; }
+  details[open] summary { margin-bottom: 10px; }
+  footer { text-align: center; font-size: .75rem; color: var(--muted); padding: 18px 0 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>わたしの映画おすすめ</h1>
+    <p class="lead">今日の気分と好みから、観る作品を3本まで提案します。</p>
+    <p class="notice">※ 作品は説明用の見本です（すべて架空のタイトル）。最新作の情報は入っていません。最新作を扱うには映画情報のAPIが必要ですが、このページは外部APIを使わない条件のため未対応です。下の「作品を追加」から、自分で作品を登録できます。</p>
+  </header>
+
+  <section class="card" aria-labelledby="h-mood">
+    <h2 id="h-mood">1. 今の気分</h2>
+    <div class="moods" role="radiogroup" aria-labelledby="h-mood">
+      <label class="mood"><input type="radio" name="mood" value="笑い">笑いたい<small>コメディ・明るい</small></label>
+      <label class="mood"><input type="radio" name="mood" value="感動">泣きたい<small>心にしみる</small></label>
+      <label class="mood"><input type="radio" name="mood" value="ドキドキ">ハラハラ<small>サスペンス・冒険</small></label>
+      <label class="mood"><input type="radio" name="mood" value="じっくり" checked>じっくり<small>深く味わう</small></label>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="h-genre">
+    <h2 id="h-genre">2. 好きなジャンル</h2>
+    <div class="chips" id="genres">
+      <label class="chip"><input type="checkbox" value="SF">SF</label>
+      <label class="chip"><input type="checkbox" value="コメディ">コメディ</label>
+      <label class="chip"><input type="checkbox" value="ロマンス">ロマンス</label>
+      <label class="chip"><input type="checkbox" value="ドラマ">ドラマ</label>
+      <label class="chip"><input type="checkbox" value="ミステリー">ミステリー</label>
+      <label class="chip"><input type="checkbox" value="アクション">アクション</label>
+      <label class="chip"><input type="checkbox" value="アニメ">アニメ</label>
+      <label class="chip"><input type="checkbox" value="音楽">音楽</label>
+    </div>
+    <p class="empty" style="margin-top:8px;font-size:.8rem">何も選ばないと、ジャンルは見ずに選びます。</p>
+  </section>
+
+  <section class="card" aria-labelledby="h-cond">
+    <h2 id="h-cond">3. 条件</h2>
+    <div class="sliderhead">
+      <label class="label" for="maxMin">上映時間の上限</label>
+      <output id="minOut" for="maxMin">120分</output>
+    </div>
+    <input type="range" id="maxMin" min="60" max="180" step="10" value="120">
+
+    <div class="sliderhead">
+      <label class="label" for="minRating">評価の下限</label>
+      <output id="ratingOut" for="minRating">7.0</output>
+    </div>
+    <input type="range" id="minRating" min="5" max="9" step="0.1" value="7">
+  </section>
+
+  <section class="card" aria-labelledby="h-result">
+    <h2 id="h-result">4. おすすめ</h2>
+    <div id="results"></div>
+    <p class="empty" style="margin-top:10px;font-size:.8rem">「見た」にした作品は、次のおすすめから外れます。</p>
+  </section>
+
+  <section class="card" aria-labelledby="h-lists">
+    <h2 id="h-lists">5. 見た作品・気になる作品</h2>
+    <p class="sub-title">気になる</p>
+    <ul class="list" id="wantList"></ul>
+    <p class="sub-title">見た（おすすめに出さない）</p>
+    <ul class="list" id="seenList"></ul>
+  </section>
+
+  <section class="card" aria-labelledby="h-add">
+    <details>
+      <summary id="h-add">作品を追加する（自分で登録）</summary>
+      <form id="addForm" autocomplete="off">
+        <label class="label" for="newTitle">タイトル（必須）</label>
+        <input type="text" id="newTitle" maxlength="30" required>
+        <label class="label" for="newGenres">ジャンル（カンマ区切り　例：SF, コメディ）</label>
+        <input type="text" id="newGenres" maxlength="60">
+        <div class="grid2">
+          <div>
+            <label class="label" for="newMin">上映時間（分）</label>
+            <input type="number" id="newMin" min="30" max="300" value="110">
+          </div>
+          <div>
+            <label class="label" for="newRating">自分の評価（5〜9）</label>
+            <input type="number" id="newRating" min="5" max="9" step="0.1" value="7.5">
+          </div>
+        </div>
+        <label class="label" for="newMood">合う気分</label>
+        <input type="text" id="newMood" maxlength="30" placeholder="笑い, 感動, ドキドキ, じっくり から">
+        <div class="btnrow">
+          <button type="submit">追加する</button>
+        </div>
+        <p id="addMsg" class="empty" role="status" style="margin-top:8px"></p>
+      </form>
+    </details>
+    <p class="empty" style="margin-top:10px;font-size:.8rem">追加した作品と見た・気になる記録は、このブラウザにだけ保存されます。</p>
+  </section>
+
+  <footer>ブラウザだけで動きます。</footer>
+</div>
+
+<script>
+(function () {
+  function $(id) { return document.getElementById(id); }
+
+  // 見本データ（架空の作品）。mood は「笑い / 感動 / ドキドキ / じっくり」から。
+  var SAMPLE = [
+    { id: 's1',  title: '月明かりの交差点',       genres: ['ロマンス', 'ドラマ'], mood: ['感動'],           minutes: 118, rating: 8.1 },
+    { id: 's2',  title: 'ゼロ重力の食堂',         genres: ['コメディ', 'SF'],     mood: ['笑い'],           minutes: 102, rating: 7.6 },
+    { id: 's3',  title: '深海の観測記録',         genres: ['SF', 'ミステリー'],   mood: ['ドキドキ', 'じっくり'], minutes: 131, rating: 8.4 },
+    { id: 's4',  title: 'ふたりの夏の終わり',     genres: ['ロマンス'],           mood: ['感動'],           minutes: 96,  rating: 7.2 },
+    { id: 's5',  title: 'ヒーロー引退式',         genres: ['アクション', 'コメディ'], mood: ['笑い', 'ドキドキ'], minutes: 109, rating: 7.0 },
+    { id: 's6',  title: '沈黙の時計台',           genres: ['ミステリー'],         mood: ['ドキドキ'],       minutes: 124, rating: 7.9 },
+    { id: 's7',  title: '小さな街の映画館',       genres: ['ドラマ'],             mood: ['じっくり', '感動'], minutes: 135, rating: 8.6 },
+    { id: 's8',  title: 'ぼくらのロボット大作戦', genres: ['アニメ', 'アクション'], mood: ['笑い'],           minutes: 90,  rating: 7.3 },
+    { id: 's9',  title: '雨の日の手紙',           genres: ['ドラマ', 'ロマンス'], mood: ['感動'],           minutes: 112, rating: 7.7 },
+    { id: 's10', title: '白い砂漠のレース',       genres: ['アクション'],         mood: ['ドキドキ'],       minutes: 128, rating: 7.5 },
+    { id: 's11', title: '夜明け前のピアノ',       genres: ['音楽', 'ドラマ'],     mood: ['感動', 'じっくり'], minutes: 104, rating: 8.2 },
+    { id: 's12', title: '猫と三人の探偵',         genres: ['ミステリー', 'コメディ'], mood: ['笑い', 'ドキドキ'], minutes: 98,  rating: 7.1 }
+  ];
+
+  var KEY = 'idea2-movies-v1';
+  var store = { custom: [], seen: [], want: [] };
+
+  function loadStore() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) {
+        var s = JSON.parse(raw);
+        store.custom = Array.isArray(s.custom) ? s.custom : [];
+        store.seen = Array.isArray(s.seen) ? s.seen : [];
+        store.want = Array.isArray(s.want) ? s.want : [];
+      }
+    } catch (e) { /* 保存できない環境でも動く */ }
+  }
+  function saveStore() {
+    try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) { /* 無視 */ }
+  }
+
+  function allMovies() { return SAMPLE.concat(store.custom); }
+
+  function selectedMood() {
+    var r = document.querySelector('input[name="mood"]:checked');
+    return r ? r.value : 'じっくり';
+  }
+  function selectedGenres() {
+    return Array.prototype.map.call(
+      document.querySelectorAll('#genres input:checked'),
+      function (i) { return i.value; }
+    );
+  }
+
+  // 採点：気分一致・ジャンル一致・評価で点数を付ける
+  function score(m, mood, genres) {
+    var reasons = [];
+    var s = 0;
+    if (m.mood.indexOf(mood) !== -1) { s += 40; reasons.push('今の気分「' + mood + '」に合う'); }
+    var hit = genres.filter(function (g) { return m.genres.indexOf(g) !== -1; });
+    if (hit.length) { s += 15 * hit.length; reasons.push('好きなジャンル（' + hit.join('・') + '）が入っている'); }
+    s += m.rating * 3;
+    reasons.push('評価 ' + m.rating.toFixed(1));
+    return { score: s, reasons: reasons };
+  }
+
+  function recommend() {
+    var mood = selectedMood();
+    var genres = selectedGenres();
+    var maxMin = +$('maxMin').value;
+    var minRating = +$('minRating').value;
+    return allMovies()
+      .filter(function (m) {
+        return store.seen.indexOf(m.id) === -1 &&
+               m.minutes <= maxMin &&
+               m.rating >= minRating;
+      })
+      .map(function (m) { var r = score(m, mood, genres); return { m: m, s: r.score, reasons: r.reasons }; })
+      .sort(function (a, b) { return b.s - a.s; })
+      .slice(0, 3);
+  }
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function actionButtons(m) {
+    var row = el('div', 'btnrow');
+    var isWant = store.want.indexOf(m.id) !== -1;
+    var wantBtn = el('button', 'small ghost', isWant ? '気になるを外す' : '気になる');
+    wantBtn.type = 'button';
+    wantBtn.addEventListener('click', function () { toggle(store.want, m.id); saveStore(); renderAll(); });
+    var seenBtn = el('button', 'small', '見た');
+    seenBtn.type = 'button';
+    seenBtn.addEventListener('click', function () { toggle(store.seen, m.id, true); saveStore(); renderAll(); });
+    row.appendChild(wantBtn);
+    row.appendChild(seenBtn);
+    return row;
+  }
+
+  function toggle(arr, id, forceAdd) {
+    var i = arr.indexOf(id);
+    if (i === -1) { arr.push(id); }
+    else if (!forceAdd) { arr.splice(i, 1); }
+  }
+
+  function renderResults() {
+    var box = $('results');
+    box.innerHTML = '';
+    var list = recommend();
+    if (!list.length) {
+      box.appendChild(el('p', 'empty', '条件に合う作品がありません。上映時間の上限を伸ばすか、評価の下限を下げてみてください。'));
+      return;
+    }
+    list.forEach(function (x, idx) {
+      var m = x.m;
+      var wrap = el('div', 'movie');
+      var head = el('div', 'movie-head');
+      head.appendChild(el('div', 'title', m.title));
+      head.appendChild(el('span', 'rank', idx === 0 ? '一番のおすすめ' : (idx + 1) + '位'));
+      wrap.appendChild(head);
+      wrap.appendChild(el('div', 'meta', m.minutes + '分 ／ 評価 ' + m.rating.toFixed(1)));
+      var tags = el('div');
+      m.genres.forEach(function (g) { tags.appendChild(el('span', 'tag', g)); });
+      wrap.appendChild(tags);
+      var ul = el('ul', 'reasons');
+      x.reasons.forEach(function (r) { ul.appendChild(el('li', null, r)); });
+      wrap.appendChild(ul);
+      wrap.appendChild(actionButtons(m));
+      box.appendChild(wrap);
+    });
+  }
+
+  function renderLists() {
+    var movies = allMovies();
+    function fill(ulId, ids, emptyText) {
+      var ul = $(ulId);
+      ul.innerHTML = '';
+      if (!ids.length) { ul.appendChild(el('li', 'empty', emptyText)); return; }
+      ids.forEach(function (id) {
+        var m = movies.filter(function (x) { return x.id === id; })[0];
+        if (!m) return;
+        var li = el('li');
+        li.appendChild(el('span', null, m.title));
+        var b = el('button', 'ghost', '外す');
+        b.type = 'button';
+        b.addEventListener('click', function () {
+          var arr = ulId === 'wantList' ? store.want : store.seen;
+          toggle(arr, id, false);
+          saveStore(); renderAll();
+        });
+        li.appendChild(b);
+        ul.appendChild(li);
+      });
+    }
+    fill('wantList', store.want, 'まだありません');
+    fill('seenList', store.seen, 'まだありません');
+  }
+
+  function renderAll() {
+    renderResults();
+    renderLists();
+  }
+
+  // 条件の表示と再計算
+  function updateLabels() {
+    $('minOut').textContent = $('maxMin').value + '分';
+    $('ratingOut').textContent = (+$('minRating').value).toFixed(1);
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('input[name="mood"], #genres input'), function (i) {
+    i.addEventListener('change', renderResults);
+  });
+  $('maxMin').addEventListener('input', function () { updateLabels(); renderResults(); });
+  $('minRating').addEventListener('input', function () { updateLabels(); renderResults(); });
+
+  $('addForm').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var msg = $('addMsg');
+    var title = $('newTitle').value.trim();
+    if (!title) { msg.textContent = 'タイトルを入力してください。'; return; }
+    var genres = $('newGenres').value.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+    var moods = $('newMood').value.split(',').map(function (s) { return s.trim(); }).filter(function (s) {
+      return ['笑い', '感動', 'ドキドキ', 'じっくり'].indexOf(s) !== -1;
+    });
+    var minutes = clampNum($('newMin').value, 30, 300, 110);
+    var rating = clampNum($('newRating').value, 5, 9, 7.5);
+    store.custom.push({
+      id: 'c' + Date.now(),
+      title: title,
+      genres: genres.length ? genres : ['その他'],
+      mood: moods.length ? moods : ['じっくり'],
+      minutes: minutes,
+      rating: Math.round(rating * 10) / 10
+    });
+    saveStore();
+    $('addForm').reset();
+    $('newMin').value = 110;
+    $('newRating').value = 7.5;
+    msg.textContent = '「' + title + '」を追加しました。おすすめに反映されています。';
+    renderAll();
+  });
+
+  function clampNum(v, lo, hi, def) {
+    var n = parseFloat(v);
+    if (!isFinite(n)) n = def;
+    return Math.min(hi, Math.max(lo, n));
+  }
+
+  loadStore();
+  updateLabels();
+  renderAll();
+})();
+</script>
+</body>
+</html>
