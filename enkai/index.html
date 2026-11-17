@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>宴会の仕込み・発注ガイド</title>
+<style>
+  :root {
+    --bg: #f6f4f0;
+    --card: #ffffff;
+    --text: #2b2622;
+    --muted: #7a716a;
+    --line: #e4ded6;
+    --accent: #b5452b;
+    --accent-soft: #fbeae5;
+    --ok: #2f7a4a;
+    --warn: #b06a00;
+    --warn-bg: #fff4e0;
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1b1917;
+      --card: #26231f;
+      --text: #f1ebe4;
+      --muted: #a79d93;
+      --line: #3a352f;
+      --accent: #f07a58;
+      --accent-soft: #3a2620;
+      --ok: #7fd09b;
+      --warn: #f2b35a;
+      --warn-bg: #3a2e18;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1b1917;
+    --card: #26231f;
+    --text: #f1ebe4;
+    --muted: #a79d93;
+    --line: #3a352f;
+    --accent: #f07a58;
+    --accent-soft: #3a2620;
+    --ok: #7fd09b;
+    --warn: #f2b35a;
+    --warn-bg: #3a2e18;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", "Meiryo", sans-serif;
+    line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 16px; }
+  header { padding: 8px 0 4px; }
+  h1 { font-size: 1.35rem; margin: 0 0 4px; }
+  .lead { margin: 0; color: var(--muted); font-size: .92rem; }
+  h2 { font-size: 1rem; margin: 0 0 12px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-top: 14px;
+  }
+  .label { display: block; font-size: .9rem; color: var(--muted); margin: 14px 0 6px; }
+  .label:first-of-type { margin-top: 0; }
+
+  /* コース選択 */
+  .courses { display: grid; gap: 10px; grid-template-columns: 1fr; }
+  @media (min-width: 540px) { .courses { grid-template-columns: repeat(3, 1fr); } }
+  .course {
+    position: relative;
+    display: block;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 14px;
+    cursor: pointer;
+    min-height: 64px;
+  }
+  .course input { position: absolute; opacity: 0; pointer-events: none; }
+  .course:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+  .course:has(input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .course-name { display: block; font-weight: 700; }
+  .course-desc { display: block; font-size: .8rem; color: var(--muted); }
+
+  /* 入力 */
+  .row { display: flex; gap: 8px; align-items: center; }
+  input[type="number"], input[type="date"] {
+    flex: 1;
+    min-height: 48px;
+    font-size: 16px; /* iOSのズーム防止 */
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: inherit;
+    width: 100%;
+  }
+  .step {
+    flex: 0 0 52px;
+    height: 48px;
+    font-size: 1.4rem;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .step:active { transform: scale(.96); }
+  input[type="range"] {
+    width: 100%;
+    margin: 10px 0 2px;
+    accent-color: var(--accent);
+    height: 28px;
+  }
+  .sliderhead { display: flex; justify-content: space-between; align-items: baseline; }
+  output { font-weight: 700; color: var(--accent); font-size: 1.05rem; }
+
+  /* 結果 */
+  .deadline {
+    border-radius: 12px;
+    padding: 12px 14px;
+    background: var(--accent-soft);
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .deadline .date { font-size: 1.2rem; display: block; }
+  .deadline .sub { font-size: .9rem; font-weight: 400; color: var(--muted); }
+  .deadline.late { background: var(--warn-bg); color: var(--warn); }
+  .deadline.empty { background: var(--bg); color: var(--muted); font-weight: 400; }
+  .summary { font-size: .85rem; color: var(--muted); margin: 0 0 8px; }
+  ul.items { list-style: none; margin: 0; padding: 0; }
+  ul.items li {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 12px;
+    padding: 12px 0;
+    border-top: 1px solid var(--line);
+  }
+  ul.items li:first-child { border-top: none; }
+  .name { font-weight: 700; overflow-wrap: anywhere; }
+  .cat {
+    display: inline-block;
+    font-size: .72rem;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 0 6px;
+    margin-right: 6px;
+    vertical-align: 1px;
+  }
+  .per { grid-column: 1 / 2; font-size: .82rem; color: var(--muted); }
+  .qty { grid-column: 2 / 3; grid-row: 1 / 3; text-align: right; font-size: 1.2rem; font-weight: 700; align-self: center; white-space: nowrap; }
+
+  .primary {
+    width: 100%;
+    min-height: 52px;
+    margin-top: 12px;
+    border: none;
+    border-radius: 12px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .primary:active { transform: scale(.99); }
+  #copyMsg { min-height: 1.5em; font-size: .88rem; color: var(--ok); margin: 8px 0 0; }
+  .note { font-size: .78rem; color: var(--muted); margin: 10px 0 0; }
+  footer { text-align: center; color: var(--muted); font-size: .75rem; padding: 18px 0 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>宴会の仕込み・発注ガイド</h1>
+    <p class="lead">人数とコースを選ぶと、食材ごとの仕込み量と卸への発注締め切りが分かります。</p>
+  </header>
+
+  <section class="card" aria-labelledby="h-course">
+    <h2 id="h-course">1. コースを選ぶ</h2>
+    <div class="courses" role="radiogroup" aria-labelledby="h-course">
+      <label class="course">
+        <input type="radio" name="course" value="ume">
+        <span class="course-name">梅コース</span>
+        <span class="course-desc">気軽な飲み会向け</span>
+      </label>
+      <label class="course">
+        <input type="radio" name="course" value="take" checked>
+        <span class="course-name">竹コース</span>
+        <span class="course-desc">定番の宴会向け</span>
+      </label>
+      <label class="course">
+        <input type="radio" name="course" value="matsu">
+        <span class="course-name">松コース</span>
+        <span class="course-desc">特別な会食向け</span>
+      </label>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="h-people">
+    <h2 id="h-people">2. 人数と宴会日</h2>
+    <label class="label" for="headcount">人数（名）</label>
+    <div class="row">
+      <button type="button" class="step" data-step="-1" aria-label="1名減らす">−</button>
+      <input type="number" id="headcount" inputmode="numeric" min="1" max="200" value="20">
+      <button type="button" class="step" data-step="1" aria-label="1名増やす">＋</button>
+    </div>
+    <input type="range" id="headcountRange" min="1" max="200" value="20" aria-label="人数スライダー">
+
+    <label class="label" for="eventDate">宴会日</label>
+    <input type="date" id="eventDate">
+  </section>
+
+  <section class="card" aria-labelledby="h-adjust">
+    <h2 id="h-adjust">3. 調整する</h2>
+    <div class="sliderhead">
+      <span class="label" style="margin:0">ロス・予備の上乗せ</span>
+      <output id="lossOut" for="loss">10%</output>
+    </div>
+    <input type="range" id="loss" min="0" max="30" step="5" value="10">
+
+    <div class="sliderhead" style="margin-top:14px">
+      <span class="label" style="margin:0">卸への発注（宴会の何日前）</span>
+      <output id="leadOut" for="lead">2日前</output>
+    </div>
+    <input type="range" id="lead" min="0" max="7" step="1" value="2">
+  </section>
+
+  <section class="card" aria-labelledby="h-result">
+    <h2 id="h-result">4. 結果</h2>
+    <div id="deadline" class="deadline empty" role="status"></div>
+    <p class="summary" id="summary"></p>
+    <ul class="items" id="items"></ul>
+    <button type="button" id="copyBtn" class="primary">発注メモをコピー</button>
+    <p id="copyMsg" role="status"></p>
+    <p class="note">※ 数値は1人前の目安です。お店のレシピや仕入れ先の単位に合わせて、使う前に確認してください。</p>
+  </section>
+
+  <footer>ブラウザだけで動きます。入力内容は保存されません。</footer>
+</div>
+
+<script>
+(function () {
+  // 1人前の目安（g、卵・尾は個数）。お店の基準に合わせて書き換えてください。
+  var COURSES = {
+    ume: {
+      label: '梅コース',
+      items: [
+        { cat: '肉',   name: '鶏もも肉',               per: 60, unit: 'g' },
+        { cat: '肉',   name: '豚ロース',               per: 40, unit: 'g' },
+        { cat: '魚',   name: '白身刺身（盛り合わせ）', per: 30, unit: 'g' },
+        { cat: '野菜', name: '季節野菜（付け合わせ）', per: 80, unit: 'g' },
+        { cat: '米',   name: '白飯',                   per: 70, unit: 'g' },
+        { cat: '卵',   name: '卵',                     per: 1,  unit: '個' }
+      ]
+    },
+    take: {
+      label: '竹コース',
+      items: [
+        { cat: '肉',   name: '牛ロース',               per: 60,  unit: 'g' },
+        { cat: '肉',   name: '鶏もも肉',               per: 60,  unit: 'g' },
+        { cat: '魚',   name: '刺身盛り（白身・赤身）', per: 60,  unit: 'g' },
+        { cat: '魚',   name: '海老',                   per: 1,   unit: '尾' },
+        { cat: '野菜', name: '季節野菜（付け合わせ）', per: 100, unit: 'g' },
+        { cat: '米',   name: '白飯',                   per: 70,  unit: 'g' },
+        { cat: '卵',   name: '卵',                     per: 1,   unit: '個' }
+      ]
+    },
+    matsu: {
+      label: '松コース',
+      items: [
+        { cat: '肉',   name: '和牛ヒレ',               per: 80,  unit: 'g' },
+        { cat: '肉',   name: '鶏もも肉',               per: 40,  unit: 'g' },
+        { cat: '魚',   name: '鯛（刺身）',             per: 50,  unit: 'g' },
+        { cat: '魚',   name: '海老',                   per: 2,   unit: '尾' },
+        { cat: '野菜', name: '季節野菜（付け合わせ）', per: 120, unit: 'g' },
+        { cat: '米',   name: '白飯',                   per: 70,  unit: 'g' },
+        { cat: '卵',   name: '卵',                     per: 1,   unit: '個' },
+        { cat: '乾物', name: 'かつお節（だし用）',     per: 5,   unit: 'g' }
+      ]
+    }
+  };
+  var DOW = ['日', '月', '火', '水', '木', '金', '土'];
+
+  function $(id) { return document.getElementById(id); }
+  function clamp(n, lo, hi) { return Math.min(hi, Math.max(lo, n)); }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function parseYmd(s) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || '');
+    if (!m) return null;
+    return new Date(+m[1], +m[2] - 1, +m[3]);
+  }
+  function fmtDate(d) {
+    return (d.getMonth() + 1) + '月' + d.getDate() + '日（' + DOW[d.getDay()] + '）';
+  }
+  function fmtQty(it, qty) {
+    if (it.unit !== 'g') return qty + ' ' + it.unit;
+    return qty >= 1000 ? (qty / 1000).toFixed(2) + ' kg' : qty + ' g';
+  }
+  function fmtPer(it) { return '1人前 ' + it.per + ' ' + it.unit; }
+
+  function getHeadcount() {
+    var n = parseInt($('headcount').value, 10);
+    if (!isFinite(n)) n = 1;
+    return clamp(n, 1, 200);
+  }
+  function getCourse() {
+    var r = document.querySelector('input[name="course"]:checked');
+    return r ? r.value : 'take';
+  }
+
+  function calc() {
+    var n = getHeadcount();
+    var loss = (+$('loss').value) / 100;
+    var lead = +$('lead').value;
+    var course = COURSES[getCourse()];
+    var rows = course.items.map(function (it) {
+      var raw = it.per * n * (1 + loss);
+      var qty = it.unit === 'g' ? Math.ceil(raw / 10) * 10 : Math.ceil(raw);
+      return { it: it, qty: qty };
+    });
+    var ev = parseYmd($('eventDate').value);
+    var deadline = null, days = null;
+    if (ev) {
+      deadline = new Date(ev.getFullYear(), ev.getMonth(), ev.getDate() - lead);
+      var today = new Date(); today.setHours(0, 0, 0, 0);
+      days = Math.round((deadline - today) / 86400000);
+    }
+    return { n: n, loss: loss, lead: lead, course: course, rows: rows, deadline: deadline, days: days };
+  }
+
+  function render() {
+    var s = calc();
+    $('lossOut').textContent = Math.round(s.loss * 100) + '%';
+    $('leadOut').textContent = s.lead === 0 ? '当日' : s.lead + '日前';
+
+    var dl = $('deadline');
+    if (!s.deadline) {
+      dl.className = 'deadline empty';
+      dl.textContent = '宴会日を入れると、卸への発注締め切りが分かります。';
+    } else {
+      var late = s.days < 0;
+      dl.className = 'deadline' + (late ? ' late' : '');
+      var rest = s.days < 0 ? '締め切りを過ぎています' :
+                 s.days === 0 ? '今日が締め切りです' :
+                 'あと' + s.days + '日';
+      dl.innerHTML = '';
+      var big = document.createElement('span');
+      big.className = 'date';
+      big.textContent = '発注締め切り：' + fmtDate(s.deadline);
+      var sub = document.createElement('span');
+      sub.className = 'sub';
+      sub.textContent = rest + '（宴会日の' + (s.lead === 0 ? '当日' : s.lead + '日前') + '）';
+      dl.appendChild(big);
+      dl.appendChild(sub);
+    }
+
+    $('summary').textContent = s.course.label + ' ／ ' + s.n + '名 ／ ロス・予備 ' + Math.round(s.loss * 100) + '% 込み';
+
+    var ul = $('items');
+    ul.innerHTML = '';
+    s.rows.forEach(function (r) {
+      var li = document.createElement('li');
+      var nameEl = document.createElement('div');
+      nameEl.className = 'name';
+      var tag = document.createElement('span');
+      tag.className = 'cat';
+      tag.textContent = r.it.cat;
+      nameEl.appendChild(tag);
+      nameEl.appendChild(document.createTextNode(r.it.name));
+      var per = document.createElement('div');
+      per.className = 'per';
+      per.textContent = fmtPer(r.it);
+      var qty = document.createElement('div');
+      qty.className = 'qty';
+      qty.textContent = fmtQty(r.it, r.qty);
+      li.appendChild(nameEl);
+      li.appendChild(per);
+      li.appendChild(qty);
+      ul.appendChild(li);
+    });
+  }
+
+  function buildMemo() {
+    var s = calc();
+    var lines = [];
+    lines.push('【宴会 仕込み・発注メモ】');
+    lines.push('宴会日：' + ($('eventDate').value ? fmtDate(parseYmd($('eventDate').value)) : '未入力'));
+    lines.push('コース：' + s.course.label + ' ／ ' + s.n + '名 ／ ロス・予備 ' + Math.round(s.loss * 100) + '%込み');
+    lines.push('');
+    s.rows.forEach(function (r) {
+      lines.push('・' + r.it.name + '：' + fmtQty(r.it, r.qty));
+    });
+    lines.push('');
+    lines.push('卸への発注締め切り：' + (s.deadline ? fmtDate(s.deadline) : '未入力'));
+    return lines.join('\n');
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function (resolve, reject) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      ok ? resolve() : reject(new Error('copy failed'));
+    });
+  }
+
+  // 人数：数字入力・スライダー・±ボタンを同期
+  function setHeadcount(n) {
+    n = clamp(n, 1, 200);
+    $('headcount').value = n;
+    $('headcountRange').value = n;
+    render();
+  }
+  $('headcount').addEventListener('input', function () {
+    var n = parseInt(this.value, 10);
+    if (isFinite(n)) $('headcountRange').value = clamp(n, 1, 200);
+    render();
+  });
+  $('headcount').addEventListener('change', function () { setHeadcount(getHeadcount()); });
+  $('headcountRange').addEventListener('input', function () { setHeadcount(+this.value); });
+  Array.prototype.forEach.call(document.querySelectorAll('.step'), function (b) {
+    b.addEventListener('click', function () {
+      setHeadcount(getHeadcount() + (+this.getAttribute('data-step')));
+    });
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('input[name="course"]'), function (r) {
+    r.addEventListener('change', render);
+  });
+  $('eventDate').addEventListener('change', render);
+  $('loss').addEventListener('input', render);
+  $('lead').addEventListener('input', render);
+
+  $('copyBtn').addEventListener('click', function () {
+    var msg = $('copyMsg');
+    copyText(buildMemo()).then(function () {
+      msg.style.color = '';
+      msg.textContent = 'コピーしました。卸へのメッセージに貼り付けできます。';
+    }, function () {
+      msg.style.color = 'var(--warn)';
+      msg.textContent = 'コピーできませんでした。内容を長押しして手動でコピーしてください。';
+    });
+  });
+
+  // 初期値：宴会日は1週間後
+  var d = new Date();
+  d.setDate(d.getDate() + 7);
+  $('eventDate').value = ymd(d);
+  render();
+})();
+</script>
+</body>
+</html>
