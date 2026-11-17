@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ふわっと空の散歩</title>
+<style>
+  :root {
+    --sky-top: #9fd8f5;
+    --sky-bottom: #fde7f0;
+    --ground: #b9e3a0;
+    --ink: #3a2e3f;
+    --card: rgba(255, 255, 255, .82);
+    --accent: #ff7aa2;
+    --sky-s: 40s;
+    --bob-s: 2.6s;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --sky-top: #2a3a68;
+      --sky-bottom: #5a4a78;
+      --ground: #3f6a4a;
+      --ink: #f6eef7;
+      --card: rgba(40, 34, 52, .82);
+      --accent: #ff9bbb;
+    }
+  }
+  :root[data-theme="dark"] {
+    --sky-top: #2a3a68;
+    --sky-bottom: #5a4a78;
+    --ground: #3f6a4a;
+    --ink: #f6eef7;
+    --card: rgba(40, 34, 52, .82);
+    --accent: #ff9bbb;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    color: var(--ink);
+    background: linear-gradient(var(--sky-top), var(--sky-bottom));
+    min-height: 100vh;
+    font-family: "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", "Noto Sans JP", "Meiryo", sans-serif;
+    overflow-x: hidden;
+  }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 14px 16px 24px; }
+  h1 { font-size: 1.3rem; margin: 4px 0 2px; text-align: center; }
+  .lead { margin: 0 0 12px; text-align: center; font-size: .9rem; opacity: .8; }
+
+  /* ステージ */
+  .stage {
+    position: relative;
+    height: min(62vh, 480px);
+    min-height: 340px;
+    border-radius: 22px;
+    overflow: hidden;
+    background: linear-gradient(var(--sky-top), var(--sky-bottom));
+    border: 3px solid #fff;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+  }
+  .ground {
+    position: absolute;
+    left: -10%; right: -10%; bottom: -30px;
+    height: 30%;
+    background: var(--ground);
+    border-radius: 50% 50% 0 0 / 40px 40px 0 0;
+  }
+  .cloud {
+    position: absolute;
+    width: 120px; height: 40px;
+    background: #fff;
+    border-radius: 40px;
+    opacity: .9;
+    animation: drift var(--sky-s) linear infinite;
+  }
+  .cloud::before, .cloud::after {
+    content: ""; position: absolute; background: #fff; border-radius: 50%;
+  }
+  .cloud::before { width: 54px; height: 54px; left: 18px; top: -26px; }
+  .cloud::after  { width: 40px; height: 40px; left: 60px; top: -16px; }
+  .c1 { top: 12%; animation-delay: -6s; }
+  .c2 { top: 30%; width: 90px; animation-delay: -20s; transform: scale(.8); }
+  .c3 { top: 6%; animation-delay: -33s; }
+  @keyframes drift {
+    from { left: 110%; }
+    to   { left: -160px; }
+  }
+  .sparkle {
+    position: absolute; font-size: 18px; opacity: .8;
+    animation: twinkle 2.4s ease-in-out infinite;
+  }
+  @keyframes twinkle { 50% { opacity: .2; transform: scale(.7); } }
+
+  /* 女の子（高さはJSで変える） */
+  .girl-wrap {
+    position: absolute;
+    left: 40%;
+    bottom: 22%;
+    width: 110px;
+    transform: translate(-50%, 0);
+    transition: transform 1.2s cubic-bezier(.3, .7, .3, 1);
+    z-index: 2;
+  }
+  .girl-wrap.flying .girl { animation: bob var(--bob-s) ease-in-out infinite; }
+  .girl { width: 100%; display: block; }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50% { transform: translateY(-10px) rotate(2deg); }
+  }
+
+  /* 愛犬 */
+  .dog-wrap {
+    position: absolute;
+    left: 66%;
+    bottom: 22%;
+    width: 92px;
+    transform: translateX(-50%);
+    z-index: 2;
+  }
+  .dog { width: 100%; display: block; transform-origin: 50% 100%; }
+  .dog.happy { animation: hop .5s ease-in-out 3; }
+  @keyframes hop {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-16px) rotate(-4deg); }
+  }
+  .tail { transform-origin: 90px 60px; }
+  .dog.happy .tail { animation: wag .18s ease-in-out infinite alternate; }
+  @keyframes wag { to { transform: rotate(30deg); } }
+
+  /* 吹き出し */
+  .bubble {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    background: #fff;
+    color: #3a2e3f;
+    padding: 8px 12px;
+    border-radius: 14px;
+    font-size: .85rem;
+    max-width: 48%;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, .1);
+    z-index: 3;
+    line-height: 1.5;
+  }
+  .bubble::after {
+    content: ""; position: absolute; left: 22px; bottom: -8px;
+    border: 8px solid transparent; border-top-color: #fff; border-bottom: 0;
+  }
+  .hearts { position: absolute; left: 0; right: 0; top: 0; bottom: 0; pointer-events: none; z-index: 4; }
+  .heart {
+    position: absolute; font-size: 20px;
+    animation: rise 1.4s ease-out forwards;
+  }
+  @keyframes rise {
+    from { transform: translateY(0); opacity: 1; }
+    to   { transform: translateY(-80px); opacity: 0; }
+  }
+
+  /* 操作パネル */
+  .card {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 16px;
+    margin-top: 14px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .08);
+  }
+  .field { margin-bottom: 12px; }
+  label, .field-label { display: block; font-size: .9rem; margin-bottom: 6px; }
+  input[type="text"] {
+    width: 100%;
+    min-height: 48px;
+    font-size: 16px; /* iOSのズーム防止 */
+    padding: 8px 12px;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    background: #fff;
+    color: #3a2e3f;
+    font-family: inherit;
+  }
+  input[type="text"]:focus { outline: none; border-color: var(--accent); }
+  .names { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 360px) { .names { grid-template-columns: 1fr; } }
+  input[type="range"] { width: 100%; height: 28px; accent-color: var(--accent); margin: 4px 0 0; }
+  .sliderhead { display: flex; justify-content: space-between; align-items: baseline; }
+  output { font-weight: 700; color: var(--accent); }
+  .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+  button {
+    min-height: 52px;
+    border: none;
+    border-radius: 14px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: inherit;
+    color: #fff;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, .15);
+  }
+  button:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0, 0, 0, .15); }
+  button.sub { background: #7bc6a4; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .count { text-align: center; font-size: .85rem; margin-top: 10px; opacity: .85; }
+  footer { text-align: center; font-size: .75rem; opacity: .7; margin-top: 16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ふわっと空の散歩</h1>
+  <p class="lead">女の子と愛犬の、ちいさな空のお散歩</p>
+
+  <div class="stage" id="stage" aria-label="空のステージ">
+    <div class="cloud c1"></div>
+    <div class="cloud c2"></div>
+    <div class="cloud c3"></div>
+    <span class="sparkle" style="left:10%; top:8%">✦</span>
+    <span class="sparkle" style="left:78%; top:44%; animation-delay:-1s">✧</span>
+    <span class="sparkle" style="left:30%; top:20%; animation-delay:-1.6s">✦</span>
+    <div class="ground"></div>
+
+    <div class="bubble" id="bubble" aria-live="polite"></div>
+
+    <div class="girl-wrap" id="girlWrap">
+      <svg class="girl" id="girl" viewBox="0 0 120 160" aria-label="女の子">
+        <!-- 手（ばんざい） -->
+        <path d="M30 80 Q14 60 22 36" stroke="#f8d7c4" stroke-width="10" fill="none" stroke-linecap="round"/>
+        <path d="M90 80 Q106 60 98 36" stroke="#f8d7c4" stroke-width="10" fill="none" stroke-linecap="round"/>
+        <!-- ワンピース -->
+        <path d="M38 78 Q60 70 82 78 L92 124 Q60 134 28 124 Z" fill="#ff9cc2"/>
+        <circle cx="60" cy="98" r="3" fill="#fff"/>
+        <circle cx="48" cy="110" r="2.5" fill="#fff"/>
+        <circle cx="72" cy="112" r="2.5" fill="#fff"/>
+        <!-- 足 -->
+        <rect x="44" y="122" width="8" height="22" rx="4" fill="#f8d7c4"/>
+        <rect x="68" y="122" width="8" height="22" rx="4" fill="#f8d7c4"/>
+        <ellipse cx="46" cy="146" rx="9" ry="5" fill="#8a5a44"/>
+        <ellipse cx="74" cy="146" rx="9" ry="5" fill="#8a5a44"/>
+        <!-- 髪（うしろ） -->
+        <path d="M24 56 Q24 14 60 14 Q96 14 96 56 Q98 88 88 92 Q60 70 32 92 Q22 88 24 56 Z" fill="#6b4a3a"/>
+        <!-- 顔 -->
+        <circle cx="60" cy="56" r="30" fill="#fde3d0"/>
+        <!-- 前髪 -->
+        <path d="M30 52 Q32 26 60 26 Q88 26 90 52 Q76 36 60 40 Q44 36 30 52 Z" fill="#6b4a3a"/>
+        <!-- ひとみ・ほっぺ・口 -->
+        <circle cx="48" cy="58" r="4" fill="#3a2e3f"/>
+        <circle cx="72" cy="58" r="4" fill="#3a2e3f"/>
+        <circle cx="49.5" cy="56.5" r="1.4" fill="#fff"/>
+        <circle cx="73.5" cy="56.5" r="1.4" fill="#fff"/>
+        <ellipse cx="42" cy="66" rx="5" ry="3" fill="#ff8fa8" opacity=".6"/>
+        <ellipse cx="78" cy="66" rx="5" ry="3" fill="#ff8fa8" opacity=".6"/>
+        <path d="M54 68 Q60 74 66 68" stroke="#3a2e3f" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <!-- リボン -->
+        <path d="M84 30 l10 -6 l0 12 z M84 30 l10 6 l0 -12 z" fill="#ffd166"/>
+      </svg>
+    </div>
+
+    <div class="dog-wrap">
+      <svg class="dog" id="dog" viewBox="0 0 120 100" aria-label="愛犬">
+        <!-- しっぽ -->
+        <path class="tail" d="M92 66 Q116 50 106 30" stroke="#d9a066" stroke-width="10" fill="none" stroke-linecap="round"/>
+        <!-- 体 -->
+        <ellipse cx="56" cy="72" rx="38" ry="22" fill="#e8b57a"/>
+        <!-- 足 -->
+        <rect x="30" y="84" width="10" height="14" rx="5" fill="#e8b57a"/>
+        <rect x="70" y="84" width="10" height="14" rx="5" fill="#e8b57a"/>
+        <!-- 頭 -->
+        <circle cx="34" cy="44" r="24" fill="#e8b57a"/>
+        <!-- 耳 -->
+        <ellipse cx="16" cy="36" rx="8" ry="16" fill="#b97b44" transform="rotate(16 16 36)"/>
+        <ellipse cx="50" cy="26" rx="7" ry="14" fill="#b97b44" transform="rotate(-18 50 26)"/>
+        <!-- 顔 -->
+        <circle cx="26" cy="42" r="3.5" fill="#3a2e3f"/>
+        <circle cx="40" cy="42" r="3.5" fill="#3a2e3f"/>
+        <circle cx="27" cy="41" r="1.2" fill="#fff"/>
+        <circle cx="41" cy="41" r="1.2" fill="#fff"/>
+        <ellipse cx="24" cy="54" rx="5" ry="3.5" fill="#3a2e3f"/>
+        <path d="M24 56 Q32 62 40 56" stroke="#3a2e3f" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <ellipse cx="22" cy="58" rx="4" ry="2.5" fill="#ff8fa8" opacity=".5"/>
+        <ellipse cx="42" cy="58" rx="4" ry="2.5" fill="#ff8fa8" opacity=".5"/>
+      </svg>
+    </div>
+
+    <div class="hearts" id="hearts"></div>
+  </div>
+
+  <section class="card" aria-label="操作パネル">
+    <div class="names">
+      <div class="field">
+        <label for="girlName">女の子の名前</label>
+        <input type="text" id="girlName" maxlength="8" value="さくら" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="dogName">愛犬の名前</label>
+        <input type="text" id="dogName" maxlength="8" value="ポチ" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="sliderhead">
+        <span class="field-label" style="margin:0">飛ぶ高さ</span>
+        <output id="altOut" for="altitude">0%</output>
+      </div>
+      <input type="range" id="altitude" min="0" max="100" value="60" aria-describedby="altNote">
+      <small id="altNote" style="opacity:.75">※ 飛んでいるときだけ動きます</small>
+    </div>
+
+    <div class="field">
+      <div class="sliderhead">
+        <span class="field-label" style="margin:0">空の流れるスピード</span>
+        <output id="speedOut" for="speed">5</output>
+      </div>
+      <input type="range" id="speed" min="1" max="10" value="5">
+    </div>
+
+    <div class="btns">
+      <button type="button" id="flyBtn">空を飛ぶ</button>
+      <button type="button" id="petBtn" class="sub">愛犬をなでる</button>
+    </div>
+    <p class="count" id="count">愛犬をなでた回数：0回</p>
+  </section>
+
+  <footer>ブラウザだけで動きます。入力内容は保存されません。</footer>
+</div>
+
+<script>
+(function () {
+  function $(id) { return document.getElementById(id); }
+  var stage = $('stage');
+  var girlWrap = $('girlWrap');
+  var dog = $('dog');
+  var flyBtn = $('flyBtn');
+  var petBtn = $('petBtn');
+  var alt = $('altitude');
+  var speed = $('speed');
+  var flying = false;
+  var pets = 0;
+
+  function girlName() { return $('girlName').value.trim() || 'きみ'; }
+  function dogName() { return $('dogName').value.trim() || 'わんちゃん'; }
+
+  function renderBubble() {
+    var g = girlName(), d = dogName();
+    $('bubble').textContent = flying
+      ? g + '：「' + d + '、見て！ふわっと空を飛べたよ！」'
+      : g + '：「' + d + '、いっしょに遊ぼう！」';
+  }
+
+  function applyHeight() {
+    var max = stage.clientHeight * 0.35;
+    var h = flying ? (+alt.value / 100) * max : 0;
+    girlWrap.style.transform = 'translate(-50%, ' + (-h).toFixed(0) + 'px)';
+    $('altOut').textContent = flying ? alt.value + '%' : '0%';
+  }
+
+  function setFlying(on) {
+    flying = on;
+    girlWrap.classList.toggle('flying', on);
+    alt.disabled = !on;
+    flyBtn.textContent = on ? 'おりる' : '空を飛ぶ';
+    applyHeight();
+    renderBubble();
+    if (on) dog.classList.add('happy');
+    setTimeout(function () { dog.classList.remove('happy'); }, 1500);
+  }
+
+  function applySpeed() {
+    var v = +speed.value;
+    $('speedOut').textContent = v;
+    // 速いほど雲が速く流れ、はばたきも速くなる
+    document.documentElement.style.setProperty('--sky-s', (60 / v).toFixed(1) + 's');
+    document.documentElement.style.setProperty('--bob-s', (2.6 * 5 / v).toFixed(2) + 's');
+  }
+
+  function spawnHeart() {
+    var h = document.createElement('span');
+    h.className = 'heart';
+    h.textContent = ['♥', '💕', '♡'][Math.floor(Math.random() * 3)];
+    h.style.left = (50 + Math.random() * 30) + '%';
+    h.style.top = (50 + Math.random() * 20) + '%';
+    $('hearts').appendChild(h);
+    setTimeout(function () { h.remove(); }, 1500);
+  }
+
+  flyBtn.addEventListener('click', function () { setFlying(!flying); });
+  alt.addEventListener('input', applyHeight);
+  speed.addEventListener('input', applySpeed);
+  $('girlName').addEventListener('input', renderBubble);
+  $('dogName').addEventListener('input', renderBubble);
+
+  petBtn.addEventListener('click', function () {
+    pets++;
+    $('count').textContent = '愛犬をなでた回数：' + pets + '回';
+    dog.classList.remove('happy');
+    void dog.offsetWidth; // アニメーションを再開させる
+    dog.classList.add('happy');
+    setTimeout(function () { dog.classList.remove('happy'); }, 1500);
+    for (var i = 0; i < 3; i++) setTimeout(spawnHeart, i * 150);
+    $('bubble').textContent = dogName() + '「わんっ！うれしいな！」';
+    setTimeout(renderBubble, 1600);
+  });
+
+  applySpeed();
+  alt.disabled = true;
+  renderBubble();
+})();
+</script>
+</body>
+</html>
